@@ -1,6 +1,10 @@
 # 拾物清单
 
 一个适合单人生活场景的本地物品管理工具。可直接本地运行，也可作为 PWA 安装到桌面，数据保存在浏览器本地。
+<img width="1876" height="1533" alt="image" src="https://github.com/user-attachments/assets/8e5b68f4-180d-4319-ad0c-cb8696bf0222" />
+<img width="1860" height="1373" alt="image" src="https://github.com/user-attachments/assets/ecdef95a-fd39-479b-99c8-a967556ee01c" />
+<img width="1869" height="1538" alt="image" src="https://github.com/user-attachments/assets/022d2a64-f52e-4317-b03f-5638f88bf899" />
+
 
 ## 已实现功能
 
