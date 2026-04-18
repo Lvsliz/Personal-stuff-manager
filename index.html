@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>拾物清单</title>
+  <meta name="theme-color" content="#2c6df2">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="拾物清单">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="hero">
+      <div class="hero__copy">
+        <span class="eyebrow">Home Inventory Companion</span>
+        <h1>拾物清单</h1>
+        <p>
+          管理家中囤货、耗材和日用品。记录它买了多少、放在哪里、什么时候该用、什么时候该补。
+        </p>
+        <div class="hero__actions">
+          <button class="button button--primary" data-scroll-target="#item-form-card">录入物品</button>
+          <button class="button button--ghost" id="install-app" hidden>安装到桌面</button>
+          <button class="button button--ghost" id="seed-demo">填充示例数据</button>
+        </div>
+      </div>
+      <div class="hero__panel glass-card">
+        <div class="hero__metric">
+          <span>当前库存总量</span>
+          <strong id="hero-total-stock">0</strong>
+        </div>
+        <div class="hero__metric">
+          <span>临期提醒</span>
+          <strong id="hero-expiring-count">0</strong>
+        </div>
+        <div class="hero__metric">
+          <span>库存占用金额</span>
+          <strong id="hero-stock-value">¥0.00</strong>
+        </div>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="dashboard">
+        <div class="stats-grid" id="stats-grid"></div>
+
+        <div class="glass-card alerts-card">
+          <div class="section-heading">
+            <div>
+              <p class="section-tag">提醒</p>
+              <h2>需要你关注的物品</h2>
+            </div>
+          </div>
+          <div id="alerts-list" class="alerts-list"></div>
+        </div>
+      </section>
+
+      <section class="workspace-grid">
+        <div class="glass-card" id="item-form-card">
+          <div class="section-heading">
+            <div>
+              <p class="section-tag">录入</p>
+              <h2>新增物品或批次</h2>
+            </div>
+          </div>
+          <form id="item-form" class="form-grid">
+            <input type="hidden" id="item-id" name="id">
+            <label>
+              物品名称
+              <input id="item-name" name="name" required placeholder="例如：抽纸 / 洗衣凝珠">
+            </label>
+            <label>
+              类目
+              <input id="item-category" name="category" placeholder="例如：清洁 / 厨房 / 洗护">
+            </label>
+            <label>
+              品牌
+              <input id="item-brand" name="brand" placeholder="例如：心相印">
+            </label>
+            <label>
+              存放位置
+              <input id="item-location" name="location" required placeholder="例如：阳台柜 / 床底箱">
+            </label>
+            <label>
+              单位
+              <input id="item-unit" name="unit" required placeholder="例如：包 / 瓶 / 个">
+            </label>
+            <label>
+              当前数量
+              <input id="item-quantity" name="quantity" type="number" min="0" step="0.01" required>
+            </label>
+            <label>
+              低库存阈值
+              <input id="item-threshold" name="threshold" type="number" min="0" step="0.01" value="1">
+            </label>
+            <label>
+              购买日期
+              <input id="item-purchase-date" name="purchaseDate" type="date">
+            </label>
+            <label>
+              启用日期
+              <input id="item-open-date" name="openDate" type="date">
+            </label>
+            <label>
+              过期日期
+              <input id="item-expiry-date" name="expiryDate" type="date">
+            </label>
+            <label>
+              购买件数
+              <input id="item-pack-count" name="packCount" type="number" min="1" step="1" value="1">
+            </label>
+            <label>
+              总价
+              <input id="item-total-cost" name="totalCost" type="number" min="0" step="0.01" placeholder="0.00">
+            </label>
+            <label class="form-grid__wide">
+              备注
+              <textarea id="item-note" name="note" rows="3" placeholder="例如：柜子最里侧；先用旧批次"></textarea>
+            </label>
+            <div class="form-actions form-grid__wide">
+              <button class="button button--primary" type="submit">保存物品</button>
+              <button class="button button--ghost" type="button" id="reset-form">清空</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="glass-card">
+          <div class="section-heading">
+            <div>
+              <p class="section-tag">动作</p>
+              <h2>更新库存</h2>
+            </div>
+          </div>
+          <form id="usage-form" class="form-grid">
+            <label class="form-grid__wide">
+              选择物品
+              <select id="usage-item-id" required></select>
+            </label>
+            <label>
+              动作类型
+              <select id="usage-type">
+                <option value="consume">消耗</option>
+                <option value="restock">补货</option>
+                <option value="open">开始使用</option>
+                <option value="move">调整位置</option>
+              </select>
+            </label>
+            <label>
+              数量变化
+              <input id="usage-amount" type="number" min="0" step="0.01" value="1">
+            </label>
+            <label>
+              日期
+              <input id="usage-date" type="date">
+            </label>
+            <label>
+              新位置
+              <input id="usage-location" placeholder="仅移动时需要填写">
+            </label>
+            <label class="form-grid__wide">
+              说明
+              <textarea id="usage-note" rows="3" placeholder="例如：从阳台柜拿出 1 包，开始使用"></textarea>
+            </label>
+            <div class="form-actions form-grid__wide">
+              <button class="button button--primary" type="submit">记录动作</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section class="glass-card">
+        <div class="section-heading section-heading--spaced">
+          <div>
+            <p class="section-tag">总览</p>
+            <h2>物品清单</h2>
+          </div>
+          <div class="toolbar">
+            <input id="search-input" class="toolbar__search" placeholder="搜索名称、类目、品牌、位置">
+            <select id="filter-status">
+              <option value="all">全部状态</option>
+              <option value="active">有库存</option>
+              <option value="low">低库存</option>
+              <option value="expiring">30 天内临期</option>
+              <option value="expired">已过期</option>
+            </select>
+            <button class="button button--ghost" id="export-data">导出数据</button>
+            <label class="button button--ghost button--file">
+              导入数据
+              <input type="file" id="import-data" accept="application/json">
+            </label>
+          </div>
+        </div>
+        <div id="inventory-list" class="inventory-list"></div>
+      </section>
+
+      <section class="glass-card">
+        <div class="section-heading">
+          <div>
+            <p class="section-tag">数据</p>
+            <h2>可持续使用与升级兼容</h2>
+          </div>
+        </div>
+        <div class="compatibility-grid">
+          <article class="compatibility-card">
+            <strong>版本化数据结构</strong>
+            <p>导出的文件带有 `schemaVersion`、`appVersion`、导出时间和完整数据体，后续新版本可以按版本迁移。</p>
+          </article>
+          <article class="compatibility-card">
+            <strong>迁移入口已预留</strong>
+            <p>应用启动和导入时都会经过统一的迁移函数。后续字段调整时，可以继续兼容旧备份。</p>
+          </article>
+          <article class="compatibility-card">
+            <strong>离线可安装</strong>
+            <p>支持浏览器安装到桌面，安装后可像本地应用一样启动，离线也能打开和使用。</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="bottom-grid">
+        <div class="glass-card">
+          <div class="section-heading">
+            <div>
+              <p class="section-tag">采购</p>
+              <h2>最近采购记录</h2>
+            </div>
+          </div>
+          <div id="purchase-list" class="timeline-list"></div>
+        </div>
+
+        <div class="glass-card">
+          <div class="section-heading">
+            <div>
+              <p class="section-tag">日志</p>
+              <h2>库存变动记录</h2>
+            </div>
+          </div>
+          <div id="activity-list" class="timeline-list"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <template id="stat-card-template">
+    <article class="stat-card">
+      <div>
+        <p class="stat-card__label"></p>
+        <strong class="stat-card__value"></strong>
+      </div>
+      <span class="stat-card__hint"></span>
+    </article>
+  </template>
+
+  <template id="item-card-template">
+    <article class="item-card">
+      <div class="item-card__header">
+        <div>
+          <div class="item-card__title-row">
+            <h3 class="item-card__name"></h3>
+            <span class="badge item-card__status"></span>
+          </div>
+          <p class="item-card__meta"></p>
+        </div>
+        <div class="item-card__quantity"></div>
+      </div>
+      <div class="item-card__details"></div>
+      <div class="item-card__footer">
+        <div class="item-card__pricing"></div>
+        <div class="item-card__actions">
+          <button class="button button--tiny button--ghost" data-action="edit">编辑</button>
+          <button class="button button--tiny button--ghost" data-action="duplicate">复制</button>
+          <button class="button button--tiny button--danger" data-action="delete">删除</button>
+        </div>
+      </div>
+    </article>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>
