@@ -1,7 +1,11 @@
 const APP_VERSION = "1.1.0";
 const DATA_SCHEMA_VERSION = 1;
 const STORAGE_KEY = "home-inventory-tracker-v1";
+const LAST_EXPORT_STORAGE_KEY = "home-inventory-tracker-last-exported-at-v1";
 const EXPIRING_WINDOW_DAYS = 30;
+const BACKUP_REMINDER_DAYS = 14;
+const DEFAULT_CATEGORY_TEMPLATES = ["清洁", "厨房", "洗护", "居家", "食品", "药品"];
+const DEFAULT_LOCATION_TEMPLATES = ["阳台柜", "厨房柜", "卫生间镜柜", "客厅电视柜", "床底箱", "玄关柜"];
 
 const state = loadState();
 let deferredInstallPrompt = null;
@@ -28,6 +32,10 @@ const elements = {
   heroTotalStock: document.querySelector("#hero-total-stock"),
   heroExpiringCount: document.querySelector("#hero-expiring-count"),
   heroStockValue: document.querySelector("#hero-stock-value"),
+  categorySuggestions: document.querySelector("#category-suggestions"),
+  locationSuggestions: document.querySelector("#location-suggestions"),
+  backupStatus: document.querySelector("#backup-status"),
+  backupAdvice: document.querySelector("#backup-advice"),
 };
 
 document.querySelectorAll("[data-scroll-target]").forEach((button) => {
@@ -185,6 +193,8 @@ function renderAll() {
   renderPurchases();
   renderActivities();
   renderUsageOptions();
+  renderSuggestions();
+  renderBackupStatus();
 }
 
 function renderHeroMetrics() {
@@ -271,6 +281,9 @@ function renderInventory(items) {
       `总价 ${currency(item.totalCost)} · 均价 ${currency(item.avgCost)} / 件 · 估算单单位成本 ${currency(getPerUnitCost(item))}`;
 
     node.querySelectorAll("[data-action]").forEach((button) => {
+      if (button.dataset.action === "consume-one") {
+        button.disabled = item.quantity <= 0;
+      }
       button.addEventListener("click", () => handleItemAction(button.dataset.action, item.id));
     });
 
@@ -334,6 +347,17 @@ function handleItemAction(action, itemId) {
   const item = state.items.find((entry) => entry.id === itemId);
   if (!item) {
     return;
+  }
+
+  if (action === "consume-one") {
+    if (item.quantity <= 0) {
+      return;
+    }
+
+    item.quantity = Math.max(0, item.quantity - 1);
+    item.updatedAt = new Date().toISOString();
+    addActivity("consume", item.id, `${item.name} 快捷消耗 1 ${item.unit}`);
+    renderAll();
   }
 
   if (action === "edit") {
@@ -438,6 +462,8 @@ function exportData() {
   anchor.download = `inventory-backup-v${DATA_SCHEMA_VERSION}-${formatDateInput(new Date())}.json`;
   anchor.click();
   URL.revokeObjectURL(url);
+  localStorage.setItem(LAST_EXPORT_STORAGE_KEY, new Date().toISOString());
+  renderBackupStatus();
 }
 
 function importData(event) {
@@ -667,6 +693,44 @@ function renderEmptyableList(container, entries, emptyText, renderItem) {
   entries.forEach((entry) => {
     container.appendChild(renderItem(entry));
   });
+}
+
+function renderSuggestions() {
+  renderDatalist(elements.categorySuggestions, getTemplateValues("category", DEFAULT_CATEGORY_TEMPLATES));
+  renderDatalist(elements.locationSuggestions, getTemplateValues("location", DEFAULT_LOCATION_TEMPLATES));
+}
+
+function renderDatalist(datalist, values) {
+  datalist.innerHTML = values.map((value) => `<option value="${escapeHtml(value)}"></option>`).join("");
+}
+
+function getTemplateValues(field, defaults) {
+  const values = new Set(defaults);
+  state.items.forEach((item) => {
+    const value = String(item[field] || "").trim();
+    if (value) {
+      values.add(value);
+    }
+  });
+  return [...values].sort((left, right) => left.localeCompare(right, "zh-CN"));
+}
+
+function renderBackupStatus() {
+  const exportedAt = localStorage.getItem(LAST_EXPORT_STORAGE_KEY);
+
+  if (!exportedAt) {
+    elements.backupStatus.textContent = "还没有导出过备份。";
+    elements.backupAdvice.textContent = "建议在录入或调整一批数据后导出 JSON，升级前也先保留一份。";
+    return;
+  }
+
+  const exportedDate = new Date(exportedAt);
+  const elapsedDays = Math.floor((Date.now() - exportedDate.getTime()) / 86400000);
+  elements.backupStatus.textContent = `上次导出备份：${formatDisplayDate(formatDateInput(exportedDate))}`;
+  elements.backupAdvice.textContent =
+    elapsedDays >= BACKUP_REMINDER_DAYS
+      ? `距离上次备份已经 ${elapsedDays} 天，建议现在导出一份新的 JSON。`
+      : `距离上次备份 ${elapsedDays} 天，当前备份节奏正常。`;
 }
 
 function parseNumber(value, fallback = 0) {

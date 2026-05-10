@@ -75,7 +75,7 @@
             </label>
             <label>
               类目
-              <input id="item-category" name="category" placeholder="例如：清洁 / 厨房 / 洗护">
+              <input id="item-category" name="category" list="category-suggestions" placeholder="例如：清洁 / 厨房 / 洗护">
             </label>
             <label>
               品牌
@@ -83,7 +83,7 @@
             </label>
             <label>
               存放位置
-              <input id="item-location" name="location" required placeholder="例如：阳台柜 / 床底箱">
+              <input id="item-location" name="location" required list="location-suggestions" placeholder="例如：阳台柜 / 床底箱">
             </label>
             <label>
               单位
@@ -126,6 +126,8 @@
               <button class="button button--ghost" type="button" id="reset-form">清空</button>
             </div>
           </form>
+          <datalist id="category-suggestions"></datalist>
+          <datalist id="location-suggestions"></datalist>
         </div>
 
         <div class="glass-card">
@@ -217,6 +219,11 @@
             <strong>离线可安装</strong>
             <p>支持浏览器安装到桌面，安装后可像本地应用一样启动，离线也能打开和使用。</p>
           </article>
+          <article class="compatibility-card">
+            <strong>备份提醒</strong>
+            <p id="backup-status">还没有导出过备份。</p>
+            <p id="backup-advice">建议在录入或调整一批数据后导出 JSON，升级前也先保留一份。</p>
+          </article>
         </div>
       </section>
 
@@ -270,6 +277,7 @@
       <div class="item-card__footer">
         <div class="item-card__pricing"></div>
         <div class="item-card__actions">
+          <button class="button button--tiny button--primary" data-action="consume-one">消耗 1</button>
           <button class="button button--tiny button--ghost" data-action="edit">编辑</button>
           <button class="button button--tiny button--ghost" data-action="duplicate">复制</button>
           <button class="button button--tiny button--danger" data-action="delete">删除</button>

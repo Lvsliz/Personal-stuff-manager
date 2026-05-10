@@ -45,7 +45,7 @@ function Send-Response {
 
 try {
   $listener.Start()
-  Write-Host "Server started at http://localhost:$Port"
+  Write-Host "Server started at http://127.0.0.1:$Port"
   Write-Host "Press Ctrl+C to stop."
 
   while ($true) {

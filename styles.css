@@ -196,7 +196,7 @@ select {
 
 .compatibility-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 16px;
 }
 
@@ -213,6 +213,14 @@ select {
   display: block;
   margin-bottom: 8px;
   color: var(--text-primary);
+}
+
+.compatibility-card p {
+  margin: 0;
+}
+
+.compatibility-card p + p {
+  margin-top: 8px;
 }
 
 .toolbar__search,
@@ -280,6 +288,12 @@ label {
 
 .button:hover {
   transform: translateY(-1px);
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+  transform: none;
 }
 
 .button--primary {
